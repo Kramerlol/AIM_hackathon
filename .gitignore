@@ -5,3 +5,4 @@ data/
 *.db
 dev/matrix/synapse-data/
 audit.db
+.playwright-mcp/

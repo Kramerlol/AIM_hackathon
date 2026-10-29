@@ -1,12 +1,16 @@
 {% extends "base.html" %}
+{% set step = 1 %}
 {% block content %}
-<div class="sim">SIMULATION: this page stands in for ID Austria. Choose who you are for the test.</div>
-<h1>Log in with ID Austria</h1>
-<form method="post" action="/r/{{ token }}/identity" class="idlist">
-  {% for key, ident in identities.items() %}
-  <button class="id" name="identity_id" value="{{ key }}">
-    <strong>{{ ident.label }}</strong><span>{{ ident.detail }}</span>
-  </button>
-  {% endfor %}
-</form>
+<section class="card">
+  <div class="sim"><strong>Simulation.</strong> This page stands in for ID Austria. Choose who you are for the test.</div>
+  <h1>Log in with ID Austria</h1>
+  <form method="post" action="/r/{{ token }}/identity" class="idlist">
+    {% for key, ident in identities.items() %}
+    <button class="id" name="identity_id" value="{{ key }}">
+      <span class="avatar {{ 'stranger' if key == 'stranger' }}">{{ ident.label.replace('Dr. ', '')[0] if key != 'stranger' else '?' }}</span>
+      <span><strong>{{ ident.label }}</strong><span class="d">{{ ident.detail }}</span></span>
+    </button>
+    {% endfor %}
+  </form>
+</section>
 {% endblock %}

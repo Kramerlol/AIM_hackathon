@@ -1,8 +1,11 @@
 {% extends "base.html" %}
+{% set step = 1 %}
 {% block content %}
-<h1>A document has been requested from you</h1>
-<p>To protect the data, we first need to confirm who you are. You do not need an account and you
-do not need to install anything.</p>
-<p class="small">Reference: {{ code }}</p>
-<a class="btn" href="/r/{{ token }}/identity">Log in with ID Austria (simulated)</a>
+<section class="card rise">
+  <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+  <h1>A document has been requested from you</h1>
+  <p class="lead">First we need to confirm that it is you. It takes about a minute and you do not need an account or any installation.</p>
+  <a class="btn block" href="/r/{{ token }}/identity">Log in with ID Austria (simulated)</a>
+  <p class="small" style="margin-top:16px;margin-bottom:0">Reference: {{ code }}</p>
+</section>
 {% endblock %}

@@ -1,11 +1,17 @@
 {% extends "base.html" %}
+{% set step = 3 if status == 'filed' else 2 %}
 {% block content %}
 {% if status == 'filed' %}
-<h1>Thank you</h1>
-<p>Your answer was received{% if count %} ({{ count }} values){% endif %}. You can close this page.</p>
+<section class="card rise">
+  <div class="icon ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
+  <h1>Thank you</h1>
+  <p class="lead">Your answer was received{% if count %} ({{ count }} values){% endif %}. You can close this page.</p>
+</section>
 {% else %}
-<h1>Not sent on</h1>
-<p>The document does not match the request, so it was not sent on. Please check that you have the
-right document and try again with the link, or contact the requester.</p>
+<section class="card rise">
+  <div class="icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg></div>
+  <h1>Not sent on</h1>
+  <p class="lead">The document does not match the request, so it was not sent on. Please check that you have the right document and try again with the link, or contact the requester.</p>
+</section>
 {% endif %}
 {% endblock %}

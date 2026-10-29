@@ -3,12 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>{% block title %}Secure request{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%231d5fd1%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M12 3 5 6v5c0 4.5 2.9 8.2 7 10 4.1-1.8 7-5.5 7-10V6l-7-3Z%27/%3E%3Cpath d=%27m9 12 2 2 4-4%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header class="top"><span>Secure document request</span><span class="proto">Prototype</span></header>
+<header class="top"><div class="top-in">
+  <span class="brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 2.9 8.2 7 10 4.1-1.8 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+    Secure request
+  </span>
+  <span class="proto">Prototype</span>
+</div></header>
 <main>
+{% if step %}
+<ol class="steps" aria-label="Progress">
+  <li class="{{ 'done' if step > 1 else 'on' }}"><span class="n">{{ '✓' if step > 1 else '1' }}</span> Verify</li>
+  <li class="{{ 'done' if step > 2 else ('on' if step == 2 else '') }}"><span class="n">{{ '✓' if step > 2 else '2' }}</span> Send</li>
+  <li class="{{ 'on' if step == 3 else '' }}"><span class="n">3</span> Done</li>
+</ol>
+{% endif %}
 {% block content %}{% endblock %}
 </main>
 </body>
