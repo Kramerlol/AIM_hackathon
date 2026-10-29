@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Form, Request, UploadFile, File, Dep
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+from fhir_store import store_resources_with_provenance
 
 from audit import log_audit, init_db
 import parser  # your parser.py module
@@ -208,7 +209,17 @@ async def submit_document(
 
     # --- Store resources on FHIR server (stub) ---
     # For now, just log the resource count.
-    log_audit("answer_filed", "system", {"token": token, "resource_count": len(fhir_resources)})
+    # log_audit("answer_filed", "system", {"token": token, "resource_count": len(fhir_resources)})
+
+    # Store resources on FHIR server
+    try:
+        stored_resources = await store_resources_with_provenance(fhir_resources, req_data)
+    except Exception as e:
+        log_audit("storage_error", "system", {"token": token, "error": str(e)})
+        return {"error": f"Failed to store FHIR resources: {str(e)}"}
+    
+    log_audit("answer_filed", "system", {"token": token, "resource_count": len(stored_resources)})
+    # Now the FHIR server will be populated.
 
     # --- Notify doctor via Matrix (stub) ---
     # In real integration, call a webhook or have bot poll.
