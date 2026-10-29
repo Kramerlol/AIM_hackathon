@@ -6,3 +6,7 @@ data/
 dev/matrix/synapse-data/
 audit.db
 .playwright-mcp/
+
+# The HL7 FHIR validator (Java) must run on every resource. Each of us downloads
+# validator_cli.jar ourselves; it is not committed.
+validator_cli.jar
