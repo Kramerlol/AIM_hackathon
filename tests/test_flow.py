@@ -69,7 +69,7 @@ def test_m2_colleague_blocked_and_hofer_told(client):
     assert submit(client, LAB, "lab-result-maria-beispiel.md").status_code == 403
     be = backend.get_backend()
     assert "answer_filed" not in [a["event"] for a in be.audit]
-    assert any("colleague" in n for n in be.notifications)
+    assert any("colleague" in n.lower() for n in be.notifications)
 
 
 def test_m3_wrong_patient_not_filed(client):

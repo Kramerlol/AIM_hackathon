@@ -1,0 +1,14 @@
+# Local test setup for the Matrix bot. The real infra (Andrey) may replace this.
+services:
+  synapse:
+    image: matrixdotorg/synapse:latest
+    volumes: ["./synapse-data:/data"]
+    ports: ["8008:8008"]
+  element:
+    image: vectorim/element-web:latest
+    volumes: ["./element-config.json:/app/config.json:ro"]
+    ports: ["8088:80"]
+  mailpit:  # optional: start with `docker compose --profile mail up -d` if nothing else serves 1025/8025
+    profiles: ["mail"]
+    image: axllent/mailpit
+    ports: ["1025:1025", "8025:8025"]

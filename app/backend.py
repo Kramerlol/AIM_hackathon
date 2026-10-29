@@ -4,10 +4,16 @@ The pages only call the functions on `backend` below. Today they are answered by
 StubBackend (in memory, fake rules). When the real backend exists, write an
 HttpBackend with the same methods and change `get_backend()`.
 """
+import json
 import re
 import secrets
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from . import notify
+
+PATIENT_FILE = Path(__file__).resolve().parent.parent / "scenario" / "patient.json"
 
 IDENTITIES = {
     "brandl": {"label": "Dr. Eva Brandl", "detail": "Lab physician, Labor Kanalstrasse"},
@@ -17,6 +23,26 @@ IDENTITIES = {
 }
 
 LINK_VALID_DAYS = 7
+
+MATRIX_USERS = {"@lena.hofer:klinikum.example": "Dr. Lena Hofer, Klinikum Beispielstadt"}
+
+
+def lookup_patient(patient_id: str):
+    """Stub patient registry: the scenario's Patient resource. The real system asks the FHIR server."""
+    data = json.loads(PATIENT_FILE.read_text())
+    if patient_id != data["id"]:
+        return None
+    name = data["name"][0]
+    return {"name": " ".join(name["given"] + [name["family"]]), "birthdate": data["birthDate"]}
+
+
+def identity_for(person: str):
+    """Map a person's name to a mock identity. The real ID Austria check compares verified names."""
+    norm = lambda t: re.sub(r"^dr\.?\s+", "", t.strip().lower())
+    for key, ident in IDENTITIES.items():
+        if norm(ident["label"]) == norm(person):
+            return key
+    return None
 
 
 @dataclass
@@ -30,6 +56,8 @@ class Request:
     recipient: str
     expected_identity: str
     requested_by: str
+    org: str = ""
+    room_id: str | None = None
     created: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     used: bool = False
 
@@ -71,15 +99,23 @@ class StubBackend:
     # --- interface ---------------------------------------------------------
     def create_request(self, *, patient_name, patient_birthdate, doc_type, channel, recipient,
                        expected_identity, requested_by="Dr. Lena Hofer, Klinikum Beispielstadt",
-                       token=None):
+                       org="", room_id=None, token=None):
         token = token or secrets.token_urlsafe(24)
         req = Request(token=token, code=secrets.token_hex(4).upper(), patient_name=patient_name,
                       patient_birthdate=patient_birthdate, doc_type=doc_type, channel=channel,
                       recipient=recipient, expected_identity=expected_identity,
-                      requested_by=requested_by)
+                      requested_by=requested_by, org=org, room_id=room_id)
         self.requests[token] = req
-        self._log("request_sent", "Dr. Lena Hofer", req, channel=channel)
         return {"token": token, "code": req.code}
+
+    def mark_sent(self, token):
+        """Call after the email or SMS was really handed over, so the audit entry is true."""
+        req = self.requests[token]
+        self._log("request_sent", req.requested_by, req, channel=req.channel)
+
+    def _notify(self, req, text):
+        self.notifications.append(text)
+        notify.notify_doctor(req.room_id, text)
 
     def get_request(self, token):
         """Landing page data. Never contains patient data."""
@@ -97,9 +133,9 @@ class StubBackend:
         self._log("identity_checked", identity_id, req, ok=ok)
         if not ok:
             self._log("misdelivery_caught", identity_id, req, reason="identity mismatch")
-            self.notifications.append(
-                f"Failed identity check for request {req.code}: '{identity_id}' tried to answer. "
-                "Nothing was filed.")
+            who = IDENTITIES.get(identity_id, {"label": identity_id, "detail": ""})
+            self._notify(req, f"Failed identity check for request {req.code}: {who['label']} "
+                              f"({who['detail']}) tried to answer. Nothing was filed.")
         return ok
 
     def get_context(self, token):
@@ -118,26 +154,30 @@ class StubBackend:
         self._log("answer_sent", identity_id, req)
         m = re.search(r"^Patient:\s*(.+?),\s*born\s+(.+?)\s*$", markdown, re.M)
         if not m:
+            self._notify(req, f"Request {req.code}: {IDENTITIES[identity_id]['label']} submitted a "
+                              "document that could not be read. Nothing was filed.")
             return {"status": "rejected",
                     "message": "We could not find the patient line in this document."}
         doc_name = m.group(1).strip()
         rows = re.findall(r"^\|.*\|\s*\d[\d-]*-\d\s*\|\s*$", markdown, re.M) if req.doc_type == "lab" else []
         if req.doc_type == "lab" and not rows:
+            self._notify(req, f"Request {req.code}: {IDENTITIES[identity_id]['label']} submitted a "
+                              "document that could not be read. Nothing was filed.")
             return {"status": "rejected", "message": "We could not find a results table."}
         typed_ok = patient_name.strip().lower() == req.patient_name.lower() \
             and patient_birthdate == req.patient_birthdate
         doc_ok = doc_name.lower() == req.patient_name.lower() and _birth_matches(m.group(2), req)
         if not (typed_ok and doc_ok):
             self._log("misdelivery_caught", identity_id, req, reason="patient mismatch")
-            self.notifications.append(
-                f"Result for {doc_name} was submitted for the request about {req.patient_name}. "
-                f"Not filed. Sender: {IDENTITIES[identity_id]['label']}.")
+            self._notify(req, f"Request {req.code}: a result for {doc_name} was submitted for the "
+                              f"request about {req.patient_name}. Not filed. "
+                              f"Sender: {IDENTITIES[identity_id]['label']}.")
             return {"status": "mismatch"}
         req.used = True
         self._log("answer_filed", identity_id, req, resources=len(rows) or 1)
-        self.notifications.append(
-            f"{req.patient_name}: {'lab result' if req.doc_type == 'lab' else 'rehab report'} filed. "
-            f"Sender: {IDENTITIES[identity_id]['label']} (ID Austria, simulated).")
+        self._notify(req, f"{req.patient_name}: {'lab result' if req.doc_type == 'lab' else 'rehab report'} "
+                          f"filed (request {req.code}). {len(rows) or 1} resource(s). "
+                          f"Sender: {IDENTITIES[identity_id]['label']} (ID Austria, simulated).")
         return {"status": "filed", "count": len(rows) or None}
 
 

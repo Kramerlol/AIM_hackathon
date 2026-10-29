@@ -1,21 +1,41 @@
+import asyncio
+import contextlib
+import logging
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, Form, Request, UploadFile
+from fastapi import FastAPI, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import mailer, sms
+from . import mailer, notify, service, sms
 from .backend import IDENTITIES, get_backend
 from .dates import normalise_date
+from .service import BASE_URL
 
 BASE = Path(__file__).resolve().parent
-BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 MAX_UPLOAD = 200_000
 
-app = FastAPI(title="Outside-person UI")
+
+@contextlib.asynccontextmanager
+async def lifespan(_app):
+    """Start the Matrix bot only when MATRIX_HOMESERVER is set. Run uvicorn with one worker."""
+    stop, task = asyncio.Event(), None
+    if os.environ.get("MATRIX_HOMESERVER"):
+        from .matrix_bot import run_bot
+        task = asyncio.create_task(run_bot(stop))
+        task.add_done_callback(lambda t: t.cancelled() or t.exception() and
+                               logging.getLogger("matrix_bot").error("bot stopped: %r", t.exception()))
+    yield
+    stop.set()
+    if task:
+        with contextlib.suppress(Exception):
+            await asyncio.wait_for(task, timeout=5)
+
+
+app = FastAPI(title="Outside-person UI", lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("SESSION_SECRET", "dev-only-secret"),
                    same_site="strict", max_age=3600)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
@@ -119,12 +139,26 @@ def sms_inbox(request: Request):
     return render(request, "sms.html", messages=sms.all_messages())
 
 
+@app.post("/requests", status_code=201)
+def create_request(body: dict):
+    """Create a request and send the link (the contract endpoint; the bot uses the same service)."""
+    try:
+        return service.create_and_send(
+            kind=body.get("kind", ""), patient_id=body.get("patient_id", ""), to=body.get("to", ""),
+            person=body.get("person", ""), org=body.get("org", ""), room_id=body.get("room_id"),
+            matrix_user=body.get("matrix_user"))
+    except service.RequestError as exc:
+        raise HTTPException(422, str(exc))
+    except OSError as exc:
+        raise HTTPException(502, f"Could not send: {exc}")
+
+
 # --- development helpers: seeded demo requests and sending (remove when the real backend exists)
 @app.get("/dev", response_class=HTMLResponse)
 def dev(request: Request, sent: str | None = None, error: str | None = None):
     be = get_backend()
     return render(request, "dev.html", requests=list(be.requests.values()), base=BASE_URL,
-                  audit=be.audit[-30:][::-1], notifications=be.notifications[::-1],
+                  audit=be.audit[-30:][::-1], notifications=notify.outbox[::-1],
                   sent=sent, error=error)
 
 
@@ -135,6 +169,7 @@ def dev_send(token: str):
         return RedirectResponse("/dev", status_code=303)
     try:
         mailer.send_request(req.channel, req.recipient, f"{BASE_URL}/r/{token}", req.code)
+        get_backend().mark_sent(token)
     except OSError as exc:
         return RedirectResponse(f"/dev?error=Could not send: {exc}", status_code=303)
     return RedirectResponse(f"/dev?sent={req.code}", status_code=303)

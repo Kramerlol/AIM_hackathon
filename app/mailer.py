@@ -6,6 +6,10 @@ from . import sms
 
 SMTP_HOST = os.environ.get("SMTP_HOST", "localhost")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "1025"))  # Mailpit
+# Any SMTP relay can replace Mailpit: set these three and nothing else changes.
+SMTP_USER = os.environ.get("SMTP_USER")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+SMTP_STARTTLS = os.environ.get("SMTP_STARTTLS") == "1"
 SENDER = "noreply@pgk-bridge.example"
 
 
@@ -21,6 +25,10 @@ def send_request_email(to: str, url: str, code: str) -> None:
     msg["Subject"] = f"Secure request, ref {code}"
     msg.set_content(request_text(url, code) + "\n\nIf you did not expect this, ignore this message.")
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=5) as smtp:
+        if SMTP_STARTTLS:
+            smtp.starttls()
+        if SMTP_USER:
+            smtp.login(SMTP_USER, SMTP_PASSWORD or "")
         smtp.send_message(msg)
 
 
