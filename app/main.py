@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import audit, mailer, notify, service, sms
+from . import audit, mailbox, mailer, notify, service, sms
 from .backend import IDENTITIES, get_backend
 from .dates import normalise_date
 from .service import BASE_URL
@@ -132,6 +132,22 @@ async def answer_submit(request: Request, token: str, patient_name: str = Form("
     if status == "blocked":
         return failure(request)
     return render(request, "result.html", status=status, count=result.get("count"))
+
+
+@app.get("/mail", response_class=HTMLResponse)
+def mail_inbox(request: Request):
+    try:
+        return render(request, "mail.html", messages=mailbox.list_messages(), unavailable=False)
+    except mailbox.MailboxUnavailable:
+        return render(request, "mail.html", messages=[], unavailable=True)
+
+
+@app.get("/mail/{message_id}", response_class=HTMLResponse)
+def mail_view(request: Request, message_id: str):
+    try:
+        return render(request, "mail_view.html", m=mailbox.get_message(message_id))
+    except mailbox.MailboxUnavailable:
+        return RedirectResponse("/mail", status_code=303)
 
 
 @app.get("/sms", response_class=HTMLResponse)

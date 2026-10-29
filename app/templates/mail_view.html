@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+<p class="small"><a href="/mail">&larr; Mail inbox</a></p>
+<h1>{{ m.subject }}</h1>
+<p class="small">To {{ m.to }} · {{ m.created }}</p>
+{% if m.html %}
+<iframe class="mailframe" sandbox="" srcdoc="{{ m.html }}" title="Email"></iframe>
+{% else %}
+<pre class="mailtext">{{ m.text }}</pre>
+{% endif %}
+</section>
+{% endblock %}

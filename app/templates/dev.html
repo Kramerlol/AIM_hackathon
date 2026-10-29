@@ -13,7 +13,7 @@
   <form method="post" action="/dev/send/{{ r.token }}"><button class="btn small">Send {{ r.channel }}</button></form>
 </div>
 {% endfor %}
-<p><a href="/sms">SMS inbox</a> · Mailpit: <a href="http://localhost:8025">localhost:8025</a></p>
+<p><a href="/mail">Mail inbox</a> · <a href="/sms">SMS inbox</a> · Mailpit: <a href="http://localhost:8025">localhost:8025</a></p>
 <h2>Matrix notifications (stub)</h2>
 <ul>{% for room, text in notifications %}<li>{{ room or "no room" }}: {{ text }}</li>{% else %}<li>None yet</li>{% endfor %}</ul>
 <h2>Audit log (audit.db)</h2>

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+<div class="sim"><strong>Simulated email.</strong> These emails were caught by Mailpit. Nothing is really sent.</div>
+<h1>Mail inbox</h1>
+{% if unavailable %}
+<div class="error">Mailpit is not reachable. Start it with <code>docker run -d --rm -p 1025:1025 -p 8025:8025 axllent/mailpit</code>.</div>
+{% elif not messages %}<p class="lead">No emails yet.</p>{% endif %}
+<ul class="mails">
+{% for m in messages %}
+  <li><a href="/mail/{{ m.id }}">
+    <span class="meta">{{ m.created }} · to {{ m.to }}</span>
+    <strong>{{ m.subject }}</strong>
+    <span class="snip">{{ m.snippet }}</span>
+  </a></li>
+{% endfor %}
+</ul>
+</section>
+<script>setTimeout(function () { location.reload(); }, 5000);</script>
+{% endblock %}
