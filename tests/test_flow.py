@@ -120,7 +120,10 @@ def test_email_and_sms_carry_only_link_and_code(monkeypatch):
     monkeypatch.setattr(smtplib, "SMTP", FakeSMTP)
     mailer.send_request("email", "eva.brandl@labor-kanal.example", "http://x/r/t", "ABCD1234")
     mailer.send_request("sms", "+43 660 000 0101", "http://x/r/t", "ABCD1234")
-    texts = [str(sent[0]["Subject"]) + sent[0].get_content()] + [m["text"] for m in sms.all_messages()]
+    plain = sent[0].get_body(("plain",)).get_content()
+    html = sent[0].get_body(("html",)).get_content()
+    assert "Open the request" in html and html.count("http://x/r/t") == 3  # button, fallback link, its visible text
+    texts = [str(sent[0]["Subject"]) + plain, html] + [m["text"] for m in sms.all_messages()]
     for text in texts:
         assert "http://x/r/t" in text and "ABCD1234" in text
         assert not any(word in text.lower() for word in PII)

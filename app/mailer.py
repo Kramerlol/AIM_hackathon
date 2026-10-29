@@ -1,8 +1,14 @@
 import os
 import smtplib
 from email.message import EmailMessage
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from . import sms
+
+_env = Environment(loader=FileSystemLoader(Path(__file__).resolve().parent / "templates" / "email"),
+                   autoescape=select_autoescape(["html"]))
 
 SMTP_HOST = os.environ.get("SMTP_HOST", "localhost")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "1025"))  # Mailpit
@@ -24,6 +30,7 @@ def send_request_email(to: str, url: str, code: str) -> None:
     msg["To"] = to
     msg["Subject"] = f"Secure request, ref {code}"
     msg.set_content(request_text(url, code) + "\n\nIf you did not expect this, ignore this message.")
+    msg.add_alternative(_env.get_template("request.html").render(url=url, code=code), subtype="html")
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=5) as smtp:
         if SMTP_STARTTLS:
             smtp.starttls()
