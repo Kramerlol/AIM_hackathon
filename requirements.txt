@@ -8,3 +8,4 @@ pydantic
 fhir.resources
 pytest==8.3.4
 matrix-nio==0.25.2
+tzdata==2024.2
