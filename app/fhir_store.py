@@ -1,8 +1,30 @@
 # app/fhir_store.py
-import httpx
 import json
+import os
+from pathlib import Path
 
-FHIR_BASE = "http://localhost:8080/fhir"   # adjust if running on Hetzner
+import httpx
+
+FHIR_BASE = os.environ.get("FHIR_BASE", "http://localhost:8080/fhir")   # adjust if running on Hetzner
+PATIENT_FILE = Path(__file__).resolve().parent.parent / "scenario" / "patient.json"
+
+
+async def ensure_patient(patient_id: str) -> None:
+    """The Observations point at Patient/<id>, so that Patient must exist on the server first."""
+    patient = json.loads(PATIENT_FILE.read_text())
+    if patient["id"] != patient_id:
+        raise Exception(f"unknown patient {patient_id}")
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.put(f"{FHIR_BASE}/Patient/{patient_id}", json=patient,
+                                headers={"Content-Type": "application/fhir+json"})
+        if resp.status_code not in (200, 201):
+            raise Exception(f"FHIR patient upload failed ({resp.status_code}): {resp.text[:200]}")
+
+
+async def store_with_patient(resources: list, patient_id: str):
+    """Make sure the patient exists, then store the resources and link the Provenance to them."""
+    await ensure_patient(patient_id)
+    return await store_resources_with_provenance(resources, {"patient_id": patient_id})
 
 async def store_resource(resource: dict) -> dict:
     """
@@ -12,7 +34,7 @@ async def store_resource(resource: dict) -> dict:
     resource_type = resource["resourceType"]
     # Remove client-assigned id (if any) to let server assign its own
     resource.pop("id", None)
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             f"{FHIR_BASE}/{resource_type}",
             json=resource,

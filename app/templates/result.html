@@ -7,6 +7,12 @@
   <h1>Thank you</h1>
   <p class="lead">Your answer was received{% if count %} ({{ count }} values){% endif %}. You can close this page.</p>
 </section>
+{% elif status == 'error' %}
+<section class="card rise">
+  <div class="icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg></div>
+  <h1>We could not save your answer</h1>
+  <p class="lead">Something went wrong on our side. Your document was not lost on your end, so please try again in a few minutes. The requesting doctor has been told.</p>
+</section>
 {% else %}
 <section class="card rise">
   <div class="icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg></div>

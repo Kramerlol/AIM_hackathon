@@ -123,7 +123,8 @@ async def answer_submit(request: Request, token: str, patient_name: str = Form("
         return answer_page(request, token, 422, "Please add the document: upload a file or "
                            "paste the text.", values)
 
-    result = get_backend().submit_answer(token, identity, patient_name.strip(), iso_date, text)
+    result = await asyncio.to_thread(get_backend().submit_answer, token, identity,
+                                     patient_name.strip(), iso_date, text)
     status = result["status"]
     if status == "rejected":
         return answer_page(request, token, 422,
