@@ -124,3 +124,22 @@ def test_email_and_sms_carry_only_link_and_code(monkeypatch):
     for text in texts:
         assert "http://x/r/t" in text and "ABCD1234" in text
         assert not any(word in text.lower() for word in PII)
+
+
+SIX = ["request_sent", "link_opened", "identity_checked", "answer_sent", "answer_filed",
+       "misdelivery_caught"]
+
+
+def test_all_six_audit_events_reach_the_audit_database(client):
+    from app import audit
+    be = backend.get_backend()
+    be.mark_sent(LAB)                                  # the request was sent
+    client.get(f"/r/{LAB}")                            # link opened
+    login(client, LAB, "stranger")                     # identity checked (fails) + misdelivery caught
+    login(client, LAB, "brandl")                       # identity checked (passes)
+    submit(client, LAB, "lab-result-maria-beispiel.md")  # answer sent + filed
+    events = {e["event"] for e in audit.read_log(100)}
+    assert set(SIX) <= events
+    entry = next(e for e in audit.read_log(100) if e["event"] == "answer_filed")
+    assert entry["actor"] == "brandl" and entry["time"] and entry["details"]["request"]
+    assert LAB not in str(audit.read_log(100))         # the secret token is never logged

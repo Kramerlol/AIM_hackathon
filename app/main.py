@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import mailer, notify, service, sms
+from . import audit, mailer, notify, service, sms
 from .backend import IDENTITIES, get_backend
 from .dates import normalise_date
 from .service import BASE_URL
@@ -158,7 +158,7 @@ def create_request(body: dict):
 def dev(request: Request, sent: str | None = None, error: str | None = None):
     be = get_backend()
     return render(request, "dev.html", requests=list(be.requests.values()), base=BASE_URL,
-                  audit=be.audit[-30:][::-1], notifications=notify.outbox[::-1],
+                  audit=audit.read_log(30), notifications=notify.outbox[::-1],
                   sent=sent, error=error)
 
 

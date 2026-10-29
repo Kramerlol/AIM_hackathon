@@ -4,3 +4,4 @@ __pycache__/
 data/
 *.db
 dev/matrix/synapse-data/
+audit.db

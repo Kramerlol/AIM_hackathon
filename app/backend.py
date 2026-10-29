@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from . import audit as audit_db
 from . import notify
 
 PATIENT_FILE = Path(__file__).resolve().parent.parent / "scenario" / "patient.json"
@@ -83,10 +84,12 @@ class StubBackend:
 
     # --- helpers -----------------------------------------------------------
     def _log(self, event, actor, req, **details):
-        self.audit.append({
-            "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "event": event, "actor": actor, "request": req.code if req else None, "details": details,
-        })
+        """Write to the audit database (audit.py) and keep an in-memory copy for the tests."""
+        if req:
+            details = {"request": req.code, "doc_type": req.doc_type, **details}
+        audit_db.log_audit(event, actor, details)
+        self.audit.append({"event": event, "actor": actor, "request": req.code if req else None,
+                           "details": details})
 
     def _valid(self, token):
         req = self.requests.get(token)
@@ -154,6 +157,7 @@ class StubBackend:
         self._log("answer_sent", identity_id, req)
         m = re.search(r"^Patient:\s*(.+?),\s*born\s+(.+?)\s*$", markdown, re.M)
         if not m:
+            self._log("parsing_error", identity_id, req, reason="no patient line")
             self._notify(req, f"Request {req.code}: {IDENTITIES[identity_id]['label']} submitted a "
                               "document that could not be read. Nothing was filed.")
             return {"status": "rejected",
@@ -161,6 +165,7 @@ class StubBackend:
         doc_name = m.group(1).strip()
         rows = re.findall(r"^\|.*\|\s*\d[\d-]*-\d\s*\|\s*$", markdown, re.M) if req.doc_type == "lab" else []
         if req.doc_type == "lab" and not rows:
+            self._log("parsing_error", identity_id, req, reason="no results table")
             self._notify(req, f"Request {req.code}: {IDENTITIES[identity_id]['label']} submitted a "
                               "document that could not be read. Nothing was filed.")
             return {"status": "rejected", "message": "We could not find a results table."}
