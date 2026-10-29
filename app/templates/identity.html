@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Identity Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .container { max-width: 400px; margin: auto; }
+        input, button { display: block; width: 100%; margin-bottom: 1em; padding: 0.5em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Verify your identity</h2>
+        <p>Please log in with your simulated ID Austria credentials.</p>
+        <form action="/answer/{{ token }}/verify" method="post">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Verify</button>
+        </form>
+    </div>
+</body>
+</html>
