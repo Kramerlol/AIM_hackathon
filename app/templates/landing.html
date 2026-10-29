@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>A document has been requested from you</h1>
+<p>To protect the data, we first need to confirm who you are. You do not need an account and you
+do not need to install anything.</p>
+<p class="small">Reference: {{ code }}</p>
+<a class="btn" href="/r/{{ token }}/identity">Log in with ID Austria (simulated)</a>
+{% endblock %}

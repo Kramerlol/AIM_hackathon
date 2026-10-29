@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+{% if status == 'filed' %}
+<h1>Thank you</h1>
+<p>Your answer was received{% if count %} ({{ count }} values){% endif %}. You can close this page.</p>
+{% else %}
+<h1>Not sent on</h1>
+<p>The document does not match the request, so it was not sent on. Please check that you have the
+right document and try again with the link, or contact the requester.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="sim">SIMULATION: this page stands in for ID Austria. Choose who you are for the test.</div>
+<h1>Log in with ID Austria</h1>
+<form method="post" action="/r/{{ token }}/identity" class="idlist">
+  {% for key, ident in identities.items() %}
+  <button class="id" name="identity_id" value="{{ key }}">
+    <strong>{{ ident.label }}</strong><span>{{ ident.detail }}</span>
+  </button>
+  {% endfor %}
+</form>
+{% endblock %}

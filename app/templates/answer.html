@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ doc_label }}</h1>
+<p>Requested by {{ requested_by }}.<br>Patient: <strong>{{ patient_hint }}</strong></p>
+{% if error %}<div class="error" role="alert">{{ error }}</div>{% endif %}
+<form method="post" action="/r/{{ token }}/answer" enctype="multipart/form-data" id="answer-form">
+  <label for="patient_name">Patient's full name, as in your document</label>
+  <input id="patient_name" name="patient_name" required autocomplete="off" value="{{ values.patient_name or '' }}">
+
+  <label for="patient_birthdate">Patient's birth date</label>
+  <input id="patient_birthdate" name="patient_birthdate" required autocomplete="off"
+         placeholder="DD.MM.YYYY" value="{{ values.patient_birthdate or '' }}">
+
+  <fieldset>
+    <legend>Document</legend>
+    <label class="choice"><input type="radio" name="source" value="paste"
+      {% if values.source != 'upload' %}checked{% endif %}> Paste text</label>
+    <label class="choice"><input type="radio" name="source" value="upload"
+      {% if values.source == 'upload' %}checked{% endif %}> Upload file (.md or .txt)</label>
+    <div id="paste-box"><textarea name="content" rows="12" aria-label="Document text">{{ values.content or '' }}</textarea></div>
+    <div id="upload-box"><input type="file" name="file" accept=".md,.txt,text/markdown,text/plain" aria-label="Document file"></div>
+  </fieldset>
+
+  <button class="btn" type="submit" id="send">Send</button>
+</form>
+<script>
+(function () {
+  var radios = document.querySelectorAll('input[name=source]');
+  function sync() {
+    var up = document.querySelector('input[name=source]:checked').value === 'upload';
+    document.getElementById('paste-box').hidden = up;
+    document.getElementById('upload-box').hidden = !up;
+  }
+  radios.forEach(function (r) { r.addEventListener('change', sync); });
+  sync();
+  document.getElementById('answer-form').addEventListener('submit', function () {
+    var b = document.getElementById('send'); b.disabled = true; b.textContent = 'Sending...';
+  });
+})();
+</script>
+{% endblock %}

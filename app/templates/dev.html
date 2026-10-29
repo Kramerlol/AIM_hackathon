@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="sim">DEV page: seeded demo requests. Not part of the product.</div>
+<h1>Demo requests</h1>
+{% if sent %}<p class="ok">Sent request {{ sent }}.</p>{% endif %}
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+{% for r in requests %}
+<div class="card">
+  <strong>{{ r.code }}</strong> {{ r.doc_type }} via {{ r.channel }} to {{ r.recipient }}
+  {% if r.used %}(used){% endif %}<br>
+  <a href="/r/{{ r.token }}">{{ base }}/r/{{ r.token }}</a>
+  <form method="post" action="/dev/send/{{ r.token }}"><button class="btn small">Send {{ r.channel }}</button></form>
+</div>
+{% endfor %}
+<p><a href="/sms">SMS inbox</a> · Mailpit: <a href="http://localhost:8025">localhost:8025</a></p>
+<h2>Matrix notifications (stub)</h2>
+<ul>{% for n in notifications %}<li>{{ n }}</li>{% else %}<li>None yet</li>{% endfor %}</ul>
+<h2>Audit log (stub)</h2>
+<table>{% for a in audit %}<tr><td>{{ a.time }}</td><td>{{ a.event }}</td><td>{{ a.actor }}</td><td>{{ a.request }}</td></tr>{% endfor %}</table>
+{% endblock %}

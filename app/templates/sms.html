@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="sim">Simulated SMS: nothing is really sent.</div>
+<h1>SMS inbox</h1>
+{% if not messages %}<p>No messages yet.</p>{% endif %}
+<ul class="sms">
+{% for m in messages %}
+  <li><div class="meta">{{ m.time }} to {{ m.recipient }}</div><div>{{ m.text }}</div></li>
+{% endfor %}
+</ul>
+<script>setTimeout(function () { location.reload(); }, 5000);</script>
+{% endblock %}
