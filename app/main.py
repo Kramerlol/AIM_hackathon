@@ -73,8 +73,13 @@ def identity_form(request: Request, token: str):
 
 
 @app.post("/r/{token}/identity")
-def identity_submit(request: Request, token: str, identity_id: str = Form(...)):
-    if identity_id not in IDENTITIES or not get_backend().verify_identity(token, identity_id):
+def identity_submit(request: Request, token: str, identity_name: str = Form(...)):
+    # Map the typed name to an identity_id; if not found, treat as "stranger"
+    identity_id = next(
+        (key for key, ident in IDENTITIES.items() if ident["name"].lower() == identity_name.lower()),
+        "stranger"
+    )
+    if identity_id == "stranger" or not get_backend().verify_identity(token, identity_id):
         return failure(request)
     verified = request.session.get("verified", {})
     verified[token] = identity_id
