@@ -4,13 +4,11 @@
 <section class="card">
   <div class="sim"><strong>Simulation.</strong> This page stands in for ID Austria. Choose who you are for the test.</div>
   <h1>Log in with ID Austria</h1>
-  <form method="post" action="/r/{{ token }}/identity" class="idlist">
-    {% for key, ident in identities.items() %}
-    <button class="id" name="identity_id" value="{{ key }}">
-      <span class="avatar {{ 'stranger' if key == 'stranger' }}">{{ ident.label.replace('Dr. ', '')[0] if key != 'stranger' else '?' }}</span>
-      <span><strong>{{ ident.label }}</strong><span class="d">{{ ident.detail }}</span></span>
-    </button>
-    {% endfor %}
+  <form method="post" action="/r/{{ token }}/identity" class="idform">
+    <label for="identity_name">Your full name (as on ID Austria)</label>
+    <input type="text" id="identity_name" name="identity_name" required autocomplete="off"
+           placeholder="e.g. Dr. Eva Brandl">
+    <button class="btn block" type="submit">Continue</button>
   </form>
 </section>
 {% endblock %}
