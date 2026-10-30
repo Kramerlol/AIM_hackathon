@@ -1,0 +1,10 @@
+| Laboratory Parameter | LOINC Code | Previous Result (01.09.2026) | Current Result (22.10.2026) | Unit | Reference Range | Change (%) | Interpretation |
+|---|---|---|---|---|---|---|---|
+| INR (International Normalized Ratio) | 6301-6 | N/A | 2.6 | Dimensionless | 0.8–1.2 | N/A | Elevated; consistent with anticoagulation therapy |
+| aPTT (Activated Partial Thromboplastin Time) | 14979-9 | N/A | 44 | s | 25–37 | N/A | Elevated |
+| Platelet Count | 777-3 | N/A | 198 | 10⁹/L | 150–400 | N/A | Normal |
+| Fibrinogen | 3255-7 | N/A | 3.4 | g/L | 2.0–4.0 | N/A | Normal |
+| Fasting Plasma Glucose | 1558-6 | 105 | 145 | mg/dL | 70–99 | **+38.1%** | Increased; hyperglycemia |
+| HbA1c (Glycated Hemoglobin) | 4548-4 | 7.2 | 8.2 | % | <5.7 (non-diabetic range) | **+13.9%** | Increased; worsening glycemic control |
+| Serum Creatinine | 2160-0 | 0.9 | 1.4 | mg/dL | 0.7–1.3 | **+55.6%** | Increased; possible renal function deterioration |
+| eGFR (CKD-EPI 2021) | 98979-8 | 90 | 52 | mL/min/1.73 m² | ≥90 | **−42.2%** | Decreased; reduced estimated kidney filtration |
